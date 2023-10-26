@@ -11,7 +11,7 @@ Enables a local client to connect to an Arduino UNO that displays a website that
 - An Ethernet Shield with an SD card reader
 - Ethernet Cable
 
-You also need to install [this library](https://github.com/bblanchon/ArduinoContinuousStepper:// "this library") if you want to use the continous stepper like i did
+You also need to install [this library](https://github.com/bblanchon/ArduinoContinuousStepper "ContinousStepper by bblanchon") if you want to use the continous stepper like i did
 
 <br><br>
 
