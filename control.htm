@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Control</title>
+
+        <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      body {
+        background-color: rgb(59, 54, 54);
+      }
+      h2 {
+        text-align: center;
+        font-size: 40px;
+        margin-bottom: 30px;
+        color: white;
+      }
+      .proyectname {
+        font-size: 12px;
+        border: 2px solid black;
+        background-color: rgb(218, 219, 219);
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-content: center;
+        flex-direction: column;
+        }
+
+      .login {
+        border: 2px solid black;
+        background-color: rgb(218, 219, 219);
+        font-size: 16px;
+        width: 200px;
+        text-align: center;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        height: 10%;
+        width: 100%;
+        background-color: rgb(109, 108, 108);
+        border: 2px solid black;
+        margin-bottom: 40px;
+      }
+
+      .todo {
+        width: 100%;
+        height: 100%;
+      }
+
+      .todo p{
+        border: solid black 2px;
+        text-align: center;
+        background-color: gray;
+        font-size: 30px;
+      }
+      button {
+        /* margin-left: 50px; */
+        background-color: rgba(218, 211, 120, 0.685);
+        font-size: 30px;
+        border: 1px solid black;
+      }
+
+      .separador {
+        border: 1px solid black;
+        margin-bottom: 40px;
+        justify-content: center;
+        align-content: center;
+      }
+    </style>
+    </head>
+    <body>
+        <header>
+            <div class="proyectname">
+                Habitación Inteligente Controlada por Arduino & LAN
+            </div>
+        </header>
+        <h2> Control de dispositivos </h2>
+        <div class="todo">
+          <div class="separador">
+            <p> Luz <button value="ITEM_1_ON" onClick="enviar(this.value)"> Activar </button> <button value="ITEM_1_OFF" onClick="enviar(this.value)"> Apagar </button> </p>
+          </div>
+          <div class="separador">
+            <p> Puerta <button value="ITEM_2_ON" onClick="enviar(this.value)"> Abrir </button> <button value="ITEM_2_OFF" onClick="enviar(this.value)"> Cerrar </button> </p>
+          </div>
+          <div class="separador">
+            <p> Cortina <button value="ITEM_3_ON" onClick="enviar(this.value)"> Abrir </button> <button value="ITEM_3_OFF" onClick="enviar(this.value)"> Cerrar </button> </p>
+          </div>
+        </div>
+
+
+        <script>
+          function enviar(value){
+            url = window.location.href;
+            if (url.indexOf("?")>0){
+              url = url.split("?")[0];
+            }
+            window.location = url + `?${value}`
+          }
+        </script>
+    </body>
+</html>
