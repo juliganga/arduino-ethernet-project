@@ -21,14 +21,20 @@ File MyFile;
 // Servo controls and states
 Servo lockServo;
 int lockPos = 15; // expressed in degrees
-int unlockPos = 80;
+int unlockPos = 50; // 80
 
-boolean locked = true;
+
+boolean LightOn = false; // if the light is on or not
+
+boolean Locked = true;
 boolean StepperSpin = false; // To set the stepper to start spinning
 boolean Spinning = false; // To tell that the stepper is spinning or not
+boolean CurtainUp = false; // To tell if the curtain is all the way up
+
+
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };  // physical mac address
-byte ip[] = { 192, 168, 120, 20 };                    // local ip address
+byte ip[] = { 192, 168, 120, 10 };                    // local ip address
 
 EthernetServer server(80);  //server port
 String readString;
@@ -62,6 +68,7 @@ void setup() {
   lockServo.write(lockPos); // Rotate it to the "locked" pos
   pinMode(relay, OUTPUT);
   digitalWrite(relay, HIGH);
+  stepper.powerOff();
 }
 
 void loop() {
@@ -89,60 +96,77 @@ void loop() {
 
 
           if (readString.equals("ITEM_1_ON ")) {  // This has a whitespace as i wanted to preserve the full string from the website
-            digitalWrite(relay, LOW);
+            
+            if (!LightOn){
+              LightOn = true;
+              MyReg = SD.open("registro.txt", FILE_WRITE); // Open txt file to write on it
+              if (MyReg) {
+                Serial.print("Writing to registro.txt...");
+                MyReg.println("Se prendio la luz"); // message to write to file
+                // close the file:
+                MyReg.close();
+                Serial.println("done.");
+             }
 
-
-            MyReg = SD.open("registro.txt", FILE_WRITE); // Open txt file to write on it
-            if (MyReg) {
-              Serial.print("Writing to registro.txt...");
-              MyReg.println("Se prendio la luz"); // message to write to file
-              // close the file:
-              MyReg.close();
-              Serial.println("done.");
+              Serial.println("Luz ON");
+              digitalWrite(relay, LOW);
             }
+
           }
 
           if (readString.equals("ITEM_1_OFF")) {
-            digitalWrite(relay, HIGH);
 
-            MyReg = SD.open("registro.txt", FILE_WRITE);
-            if (MyReg) {
-              Serial.print("Writing to registro.txt...");
-              MyReg.println("Se apago la luz");
-              // close the file:
-              MyReg.close();
-              Serial.println("done.");
+            if (LightOn){
+              LightOn = false;
+              Serial.println("Luz OFF");
+              digitalWrite(relay, HIGH);
+
+              MyReg = SD.open("registro.txt", FILE_WRITE);
+              if (MyReg) {
+                Serial.print("Writing to registro.txt...");
+                MyReg.println("Se apago la luz");
+                // close the file:
+                MyReg.close();
+                Serial.println("done.");
+              }
             }
+
           }
 
           if (readString.equals("ITEM_2_ON ")) {
-            lockServo.write(unlockPos);
+            if (Locked){ // if servo is locked
+              Locked = false;
+              lockServo.write(unlockPos);
 
-            MyReg = SD.open("registro.txt", FILE_WRITE);
-            if (MyReg) {
-              Serial.print("Writing to registro.txt...");
-              MyReg.println("Se abrio la puerta");
-              // close the file:
-              MyReg.close();
-              Serial.println("done.");
+              MyReg = SD.open("registro.txt", FILE_WRITE);
+              if (MyReg) {
+                Serial.print("Writing to registro.txt...");
+                MyReg.println("Se abrio la puerta");
+                // close the file:
+                MyReg.close();
+                Serial.println("done.");
+              }
             }
           }
 
           if (readString.equals("ITEM_2_OFF")) {
-            lockServo.write(lockPos);
-
-            MyReg = SD.open("registro.txt", FILE_WRITE);
-            if (MyReg) {
-              Serial.print("Writing to registro.txt...");
-              MyReg.println("Se cerro la puerta");
-              // close the file:
-              MyReg.close();
-              Serial.println("done.");
+            if (!Locked) { // if servo IS locked
+              Locked = true;
+              lockServo.write(lockPos);
+              MyReg = SD.open("registro.txt", FILE_WRITE);
+              if (MyReg) {
+                Serial.print("Writing to registro.txt...");
+                MyReg.println("Se cerro la puerta");
+                // close the file:
+                MyReg.close();
+                Serial.println("done.");
+              }
             }
           }
 
           if (readString.equals("ITEM_3_ON ")) {
-            if (!Spinning) { // if the stepper is NOT spinning
+            if (!Spinning && !CurtainUp) { // if the stepper is NOT spinning and the curtain is NOT up
+              CurtainUp = true;
               stepper.spin(400); // Stepper goes backwards
               MyReg = SD.open("registro.txt", FILE_WRITE);
               if (MyReg) {
@@ -158,7 +182,8 @@ void loop() {
           }
 
           if (readString.equals("ITEM_3_OFF")) {
-            if (!Spinning) { // if the stepper is NOT spinning
+            if (!Spinning && CurtainUp) { // if the stepper is NOT spinning and the curtain is up
+              CurtainUp = false;
               stepper.spin(-400); // Stepper goes backwards
               MyReg = SD.open("registro.txt", FILE_WRITE);
               if (MyReg) {
@@ -204,6 +229,7 @@ void loop() {
   // loop code that runs within the arduino, no client needed
 
   if (StepperSpin == true && Spinning == true) {
+    stepper.powerOn(); // turn on stepper, but light doesn't turn on as the power that relay needs isn't enough
     if (incremental < 8000) { // i use here a variable as a "timer" to avoid stopping the whole code execution, maybe theres a better way
       stepper.loop(); // here's also why i need to keep the code running (must be called on loop() )
       incremental = incremental + 1;
@@ -212,6 +238,7 @@ void loop() {
         StepperSpin = false;
         incremental = 0;
         Spinning = false;
+        stepper.powerOff(); // shutdown stepper, consumes valuable energy
       }
     }
   }
