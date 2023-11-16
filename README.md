@@ -32,7 +32,7 @@ byte ip[] = { 192, 168, 120, 10 }; // Set IP that you'll connect to through the 
 ```c++
   Ethernet.begin(mac, ip); // Start ethernet connection
 ```
-#### Wait for a new client, read HTTP request made by client
+#### Wait for a new client, read HTTP request made by client and react accordingly
 
 ```c++
 EthernetClient client = server.available();
@@ -45,8 +45,69 @@ EthernetClient client = server.available();
         if (readString.length() < 100) {
           //store characters to string
           readString += c;
-        }
+
+        if (c == '\n') { //if HTTP request has ended
+
+          ///////////////
+          readString.remove(0, 6); // Remove useless information so its easier to work with the newly recieved HTTP request
+          readString.remove(10, 50); // ^^
+          Serial.println(readString); // Print so i can tell whats going on
+
+
+          if (readString.equals("ITEM_1_ON ")) {  // This has a whitespace as i wanted to preserve the full string from the website
+            
+            if (!LightOn){
+              LightOn = true;
+              MyReg = SD.open("registro.txt", FILE_WRITE); // Open txt file to write on it
+              if (MyReg) {
+                Serial.print("Writing to registro.txt...");
+                MyReg.println("Se prendio la luz"); // message to write to file
+                // close the file:
+                MyReg.close();
+                Serial.println("done.");
+             }
+
+              Serial.println("Luz ON");
+              digitalWrite(relay, LOW);
+            }
+
+          }
+
+          if (readString.equals("ITEM_1_OFF")) {
+
+            if (LightOn){
+              LightOn = false;
+              Serial.println("Luz OFF");
+              digitalWrite(relay, HIGH);
+
+              MyReg = SD.open("registro.txt", FILE_WRITE);
+              if (MyReg) {
+                Serial.print("Writing to registro.txt...");
+                MyReg.println("Se apago la luz");
+                // close the file:
+                MyReg.close();
+                Serial.println("done.");
+              }
+            }
+
+          }
+}
   ```
+#### Send HTM page to client once they connect
+```c++
+File myFile = SD.open("control.htm");  // Prepares the file that the arduino will write
+          if (myFile) { 
+            // Read from the file until there's nothing else in it:
+            while (myFile.available()) { 
+              client.write(myFile.read()); // Sends the client the file over ethernet, letting us see the page
+            }
+            // close the file:
+            myFile.close();
+          }
+```
+
+## 
+
 <br>
 
 This project was made for a school proyect, published to help other similar proyects and allow expansion of the concept :)
